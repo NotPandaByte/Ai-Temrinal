@@ -28,7 +28,7 @@ if test "$argv[1]" = "help"
     echo "ai - simple Ollama helper"
     echo
     echo "Commands:"
-    echo "  ai \"prompt\"        Run a prompt with the current MODEL"
+    echo "  ai \"prompt\"      Run a prompt with the current MODEL"
     echo "  ai model          Pick a default model (pulls if needed)"
     echo "  ai setup          Interactive setup (editor, GPU/CPU, rules templates)"
     echo "  ai rules          Pick a rules template to activate"
