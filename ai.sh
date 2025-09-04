@@ -14,7 +14,6 @@ source $script_dir/lib/help.fish
 source $script_dir/lib/setup.fish
 source $script_dir/lib/rules.fish
 source $script_dir/lib/model.fish
-source $script_dir/lib/do.fish
 source $script_dir/lib/agent.fish
 
 # Main command dispatcher
@@ -35,8 +34,6 @@ switch $argv[1]
         exit 1
     case "model"
         ai_model $argv[2..-1]
-    case "do"
-        ai_do $argv[2..-1]
     case "agent"
         ai_agent $argv[2..-1]
     case "*"

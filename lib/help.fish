@@ -9,7 +9,6 @@ function ai_help
     echo "  ai setup          Interactive setup (editor, GPU/CPU, rules templates)"
     echo "  ai rules          Pick a rules template to activate"
     echo "  ai rules edit     Edit/create rules templates via your editor"
-    echo "  ai do \"task\"     Plan and run safe system tasks (e.g., update)"
     echo "  ai agent \"task\"  AI-planned commands using system context (confirm to run)"
     echo "  ai help           Show this help"
     echo
