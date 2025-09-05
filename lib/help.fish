@@ -10,6 +10,8 @@ function ai_help
     echo "  ai rules          Pick a rules template to activate"
     echo "  ai rules edit     Edit/create rules templates via your editor"
     echo "  ai agent \"task\"  AI-planned commands using system context (confirm to run)"
+    echo "  ai search \"query\" Search the internet and get AI analysis of results"
+    echo "  ai optimize       Model optimization and system performance tools"
     echo "  ai help           Show this help"
     echo
     echo "Config files:"
@@ -27,4 +29,5 @@ function ai_help
     echo "  ai model qwen2.5:14b-instruct"
     echo "  ai rules            # choose a template"
     echo "  ai rules edit       # edit or create a template"
+    echo "  ai search \"latest AI news\"   # search web + AI analysis"
 end

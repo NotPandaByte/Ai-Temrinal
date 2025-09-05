@@ -15,6 +15,8 @@ source $script_dir/lib/setup.fish
 source $script_dir/lib/rules.fish
 source $script_dir/lib/model.fish
 source $script_dir/lib/agent.fish
+source $script_dir/lib/search.fish
+source $script_dir/lib/optimize.fish
 
 # Main command dispatcher
 if test (count $argv) -eq 0
@@ -36,9 +38,38 @@ switch $argv[1]
         ai_model $argv[2..-1]
     case "agent"
         ai_agent $argv[2..-1]
+    case "search"
+        ai_search $argv[2..-1]
+    case "optimize"
+        ai_optimize $argv[2..-1]
     case "*"
         # Default: run as prompt
         set -l prompt (string join " " -- $argv)
+        
+        # Ensure GPU mode and optimize for performance
+        # Unset CPU-only mode if it was set
+        set -e OLLAMA_NO_GPU 2>/dev/null
+        
+        # Set optimal GPU settings
+        set -gx OLLAMA_GPU_LAYERS 999  # Use GPU for all layers
+        set -gx OLLAMA_FLASH_ATTENTION 1  # Enable flash attention if available
+        
+        # Check if model is loaded, if not load it
+        set -l loaded_models (ollama ps --format json 2>/dev/null | jq -r '.[].name' 2>/dev/null)
+        if test -z "$loaded_models"
+            set loaded_models (ollama ps 2>/dev/null | awk 'NR>1 {print $1}')
+        end
+        
+        # If current model isn't loaded, ensure it's the only one running
+        if not contains -- $MODEL $loaded_models
+            echo "Loading $MODEL on GPU..."
+            # Unload other models first for optimal GPU memory
+            for model in $loaded_models
+                if test -n "$model" -a "$model" != "$MODEL"
+                    ollama stop "$model" 2>/dev/null
+                end
+            end
+        end
         
         set -l rules_file $HOME/.config/ai/rules.txt
         set -l combined $prompt

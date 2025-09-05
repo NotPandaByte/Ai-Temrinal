@@ -9,7 +9,7 @@ function ai_model
             echo "Pulling $target ..."
             ollama pull "$target"
             if test $status -ne 0
-                set -l alt (string replace -a "-instruct" "" -- $target)
+                set -l alt (string replace -a -- "-instruct" "" $target)
                 if test "$alt" != "$target"
                     echo "Pull failed, trying $alt ..."
                     ollama pull "$alt"
@@ -33,9 +33,35 @@ function ai_model
                 end
             end
         end
+        # Unload other models to free up resources
+        echo "Unloading other models to optimize performance..."
+        set -l loaded_models (ollama ps --format json 2>/dev/null | jq -r '.[].name' 2>/dev/null)
+        if test -z "$loaded_models"
+            # Fallback without jq
+            set loaded_models (ollama ps 2>/dev/null | awk 'NR>1 {print $1}')
+        end
+        
+        for model in $loaded_models
+            if test "$model" != "$target"
+                echo "Unloading: $model"
+                ollama stop "$model" 2>/dev/null
+            end
+        end
+        
         set -Ux MODEL $target
         set -g MODEL $target
+        # Add to models.txt if not already there
+        set -l config_dir $HOME/.config/ai
+        set -l models_file $config_dir/models.txt
+        if test -f "$models_file"
+            if not grep -q "^$target\$" "$models_file"
+                echo "$target" >> "$models_file"
+                echo "Added $target to your models list"
+            end
+        end
+        
         echo "Default model set to: $target"
+        echo "Other models unloaded for optimal performance"
         return 0
     end
 
@@ -119,7 +145,7 @@ function ai_model
         echo "Pulling $target ..."
         ollama pull "$target"
         if test $status -ne 0
-            set -l alt (string replace -a "-instruct" "" -- $target)
+            set -l alt (string replace -a -- "-instruct" "" $target)
             if test "$alt" != "$target"
                 echo "Pull failed, trying $alt ..."
                 ollama pull "$alt"
@@ -144,7 +170,33 @@ function ai_model
         end
     end
 
+    # Unload other models to free up resources
+    echo "Unloading other models to optimize performance..."
+    set -l loaded_models (ollama ps --format json 2>/dev/null | jq -r '.[].name' 2>/dev/null)
+    if test -z "$loaded_models"
+        # Fallback without jq
+        set loaded_models (ollama ps 2>/dev/null | awk 'NR>1 {print $1}')
+    end
+    
+    for model in $loaded_models
+        if test "$model" != "$target"
+            echo "Unloading: $model"
+            ollama stop "$model" 2>/dev/null
+        end
+    end
+    
+    # Add to models.txt if not already there
+    set -l config_dir $HOME/.config/ai
+    set -l models_file $config_dir/models.txt
+    if test -f "$models_file"
+        if not grep -q "^$target\$" "$models_file"
+            echo "$target" >> "$models_file"
+            echo "Added $target to your models list"
+        end
+    end
+    
     set -Ux MODEL $target
     set -g MODEL $target
     echo "Default model set to: $target"
+    echo "Other models unloaded for optimal performance"
 end
