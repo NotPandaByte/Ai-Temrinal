@@ -16,6 +16,59 @@ function model_specs
     end
 end
 
+function get_model_size
+    set -l model $argv[1]
+    
+    # First check if model is installed and get actual size
+    set -l installed_size (ollama list 2>/dev/null | grep "^$model " | awk '{print $3}')
+    if test -n "$installed_size"
+        echo "$installed_size"
+        return
+    end
+    
+    # Fallback: estimate based on model name/parameters
+    switch $model
+        case "*1.1b*" "*1b*"
+            echo "~0.6GB"
+        case "*2b*"
+            echo "~1.3GB"
+        case "*3b*"
+            echo "~1.8GB"
+        case "*6.7b*"
+            echo "~3.7GB"
+        case "*7b*"
+            echo "~4.1GB"
+        case "*8b*"
+            echo "~4.7GB"
+        case "*9b*"
+            echo "~5.2GB"
+        case "*10.7b*"
+            echo "~6.1GB"
+        case "*13b*"
+            echo "~7.4GB"
+        case "*14b*"
+            echo "~8.2GB"
+        case "*15b*"
+            echo "~8.5GB"
+        case "*32b*"
+            echo "~18GB"
+        case "*70b*q4*" "*70b*Q4*"
+            echo "~40GB"
+        case "*70b*"
+            echo "~70GB"
+        case "*8x7b*"
+            echo "~26GB"
+        case "*8x22b*"
+            echo "~87GB"
+        case "*mini*"
+            echo "~2.3GB"
+        case "*medium*"
+            echo "~7.9GB"
+        case '*'
+            echo "~?GB"
+    end
+end
+
 function __ai_open_in_editor
     set -l file $argv[1]
     set -l editor

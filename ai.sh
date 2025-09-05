@@ -1,8 +1,15 @@
 #!/usr/bin/env fish
 
-# Initialize MODEL if not set
-if not set -q MODEL
+# Initialize MODEL from config file or default
+set -l config_dir $HOME/.config/ai
+set -l model_config $config_dir/current_model.txt
+
+if test -f $model_config
+    set MODEL (cat $model_config | string trim)
+else
+    mkdir -p $config_dir
     set MODEL "qwen2.5:7b-instruct"
+    echo $MODEL > $model_config
 end
 
 # Get the directory of this script (resolve symlinks)
@@ -43,6 +50,18 @@ switch $argv[1]
     case "optimize"
         ai_optimize $argv[2..-1]
     case "*"
+        # Check for special modes first
+        set -l debug_mode false
+        set -l reasoning_mode false
+        
+        if test "$argv[1]" = "--debug"
+            set debug_mode true
+            set argv $argv[2..-1]  # Remove --debug from args
+        else if test "$argv[1]" = "--reasoning" -o "$argv[1]" = "--think"
+            set reasoning_mode true
+            set argv $argv[2..-1]  # Remove reasoning flag from args
+        end
+        
         # Default: run as prompt
         set -l prompt (string join " " -- $argv)
         
@@ -71,14 +90,42 @@ switch $argv[1]
             end
         end
         
-        set -l rules_file $HOME/.config/ai/rules.txt
         set -l combined $prompt
-        if test -f $rules_file
-            set -l raw_rules (cat $rules_file)
-            if test (count $raw_rules) -gt 0
-                set -l rules_text (string join "\n" -- $raw_rules)
-                set combined (printf "%s\n\n%s" "Rules:\n$rules_text" "$prompt")
+        
+        # Apply reasoning mode if enabled
+        if test "$reasoning_mode" = "true"
+            set combined "Think step by step about this request and show your reasoning process.
+
+User request: $prompt
+
+Please structure your response as:
+
+**Reasoning:**
+[Show your thought process, analysis, and step-by-step thinking]
+
+**Answer:**
+[Give your final answer]"
+        else
+            # Apply rules if they exist  
+            set -l rules_file $HOME/.config/ai/rules.txt
+            if test -f $rules_file; and test -s $rules_file
+                set -l rules_content (cat $rules_file | string trim)
+                if test -n "$rules_content"
+                    set combined "Instructions: $rules_content
+
+User request: $prompt
+
+Please follow the instructions above when responding to the user request."
+                end
             end
+        end
+        
+        # Debug mode: show the actual prompt being sent
+        if test "$debug_mode" = "true"
+            echo "=== DEBUG: Full prompt being sent ==="
+            echo "$combined"
+            echo "=== END DEBUG ==="
+            return 0
         end
         
         printf "\n\nai response:\n"
